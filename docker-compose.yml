@@ -1,0 +1,59 @@
+version: '3'
+
+networks:
+  services_network:
+    driver: bridge
+
+services:
+  pb-database-server:
+    build:
+      context: ${STORAGE}/postgresql
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - TZ=GMT
+    volumes:
+      - ${STORAGE}/volume/postgresql:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - services_network
+  pb-customer-service:
+    build:
+      context: ${APPLICATIONS}/customer-service
+      dockerfile: Dockerfile
+    networks:
+      - services_network
+    ports:
+      - 8000:8000
+    expose:
+      - 8000
+    depends_on:
+      - pb-database-server
+    #environment:
+    #  - JAVA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=y # REMOTE DEBUG
+  pb-prometheus-service:
+    build:
+      context: ${METRICS}/prometheus
+      dockerfile: Dockerfile
+    networks:
+      - services_network
+    expose:
+      - 8200
+    ports:
+      - 8200:9090
+    depends_on:
+      - pb-customer-service
+  pb-grafana-service:
+    build:
+      context: ${METRICS}/grafana
+      dockerfile: Dockerfile
+    networks:
+      - services_network
+    expose:
+      - 8300
+    ports:
+      - 8300:3000
+    depends_on:
+      - pb-prometheus-service

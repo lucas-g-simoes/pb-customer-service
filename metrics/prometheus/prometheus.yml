@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+scrape_configs:
+  - job_name: 'prometheusJob'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['pb-prometheus-service:9090']
+  - job_name: 'pb-customer-service'
+    scrape_interval: 10s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['pb-customer-service:8000']
